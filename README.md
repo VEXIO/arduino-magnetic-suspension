@@ -1,3 +1,27 @@
+##Arduino Magnetic Suspension
+
+####Todo list
+1. 小车检测模块（红外LED发射接收管->阻断传感器）->小车位置
+2. 根据位置与启动状态控制电磁铁通断（可能不能反向）->8路继电器
+3. 速度显示（4位7段数码管）
+4. 启动开关（按钮，去抖动）
+
+####Workflow
+```c
+// global variables
+// use global variables to communicate
+
+void loop(){
+	checkCarStatus(); // 更新小车位置
+	calculateSpeed(); // 计算小车速度
+	checkBtnStatus(); // 更新按钮状态
+	show47digit(); // 更新数码管显示
+	changePower(); // 继电器
+}
+```
+
+
+
 ```flow
 st=>start: Start
 op1=>operation: 磁悬浮车在轨道上运行
