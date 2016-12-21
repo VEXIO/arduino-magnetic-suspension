@@ -1,31 +1,42 @@
-const int trig = 12;
-const int echo = 13;
-int reverseDistance = 1;
-int time = 0;
-boolean needReverse(){
-  float duration, distance;
-  digitalWrite(trig, HIGH);
-  delayMicroseconds(1000);
-  digitalWrite(trig, LOW);
-  duration = pulseIn (echo, HIGH);
-  distance = (duration/2)/29;
-  Serial.print("d(cm) = ");
-  Serial.println(distance);
-  if(distance <= reverseDistance)return true;
-  else return false;
+int digital[] = {13, 10, 9, 7}; // the wire pin for choosing the digit
+int number[] = {12, 8, 5, 3, 2, 11, 6, 4}; // the wire for displaying number
+int matrix[] = {252, 96, 218, 242, 102, 182, 190, 224, 254, 246}; // combination of 0-9
+int showNumber;
+
+void showNum(){
+  static int i = 0;
+  int num = showNumber;
+  digitalWrite(digital[i], HIGH); // light the current digit pin
+  showNum_show(num % 10, i);
+  num /= 10;
+  delay(5);
+  showNum_igniteAll(); // ignite all to show the next digit.
+}
+
+void showNum_show(int num, int k){
+  num = matrix[num];
+  for (int i=7; i>=0; i--){
+    digitalWrite(number[i], !(num%2));
+    num /= 2;
+  }
+  if (k == 1)
+    digitalWrite(4, LOW);
+}
+
+void showNum_igniteAll(){
+  for (int i=2; i<=13; i++)
+    digitalWrite(i, LOW);
 }
 
 void setup() {
   Serial.begin(9600);
-  pinMode (trig, OUTPUT);
-  pinMode (echo, INPUT);
+
+  // just enable all the pins
+  for (int i=2; i<=13; i++)
+    pinMode(i, OUTPUT);
 }
 
 void loop() {
-  while(!needReverse())
-  	;
-  // Do Reverse:
-  	// pass;
-
+  showNum(); // this takes 5ms to process
 }
 
