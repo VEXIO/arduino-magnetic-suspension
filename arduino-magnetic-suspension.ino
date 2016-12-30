@@ -27,8 +27,8 @@ void showNum(){
   digitalWrite(digital[i], HIGH); // light the current digit pin
   showNum_show(num % 10, i);
   num /= 10;
-  delay(5);
-  showNum_igniteAll(); // ignite all to show the next digit.
+  delay(7);
+  digitalWrite(digital[i], LOW); // ignite this pin.
   i--;
 }
 
@@ -38,13 +38,9 @@ void showNum_show(int num, int k){
     digitalWrite(number[i], !(num%2));
     num /= 2;
   }
-  if (k == 1)
+  if (k == 0){
     digitalWrite(number[7], LOW);
-}
-
-void showNum_igniteAll(){
-  for (int i=0; i<4; i++)
-    digitalWrite(digital[i], LOW);
+  }
 }
 
 void checkBtnStatus(){
@@ -86,7 +82,12 @@ void checkCarStatus(){
 
 void setup() {
   // set pinMode.
+  for (int i=0; i<4; i++)
+    pinMode(digital[i], OUTPUT);
+  for (int i=0; i<8; i++)
+    pinMode(number[i], OUTPUT);
 
+    
   // start TIC.
   TCCR1A = 0;
   TCCR1B = 1<<CS12;
