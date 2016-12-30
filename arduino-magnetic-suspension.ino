@@ -1,7 +1,7 @@
 int resetClock = 65284; // 65536 - 65535 / 1048 * 4
 
-int digital[] = {13, 10, 9, 7}; // the wire pin for choosing the digit
-int number[] = {12, 8, 5, 3, 2, 11, 6, 4}; // the wire for displaying number
+int digital[] = {48, 46, 44, 50}; // the wire pin for choosing the digit
+int number[] = {32, 22, 36, 30, 34, 26, 24, 28}; // the wire for displaying number
 int matrix[] = {252, 96, 218, 242, 102, 182, 190, 224, 254, 246}; // combination of 0-9
 int showNumber;
 
@@ -18,13 +18,18 @@ int raySignalCnt = 2; // how many ray signal is set.
 
 
 void showNum(){
-  static int i = 0;
-  int num = showNumber;
+  static int i = 3;
+  static int num = showNumber;
+  if (i == -1){
+    num = showNumber;
+    i = 3;
+  }
   digitalWrite(digital[i], HIGH); // light the current digit pin
   showNum_show(num % 10, i);
   num /= 10;
   delay(5);
   showNum_igniteAll(); // ignite all to show the next digit.
+  i--;
 }
 
 void showNum_show(int num, int k){
@@ -34,12 +39,12 @@ void showNum_show(int num, int k){
     num /= 2;
   }
   if (k == 1)
-    digitalWrite(4, LOW);
+    digitalWrite(number[7], LOW);
 }
 
 void showNum_igniteAll(){
-  for (int i=2; i<=13; i++)
-    digitalWrite(i, LOW);
+  for (int i=0; i<4; i++)
+    digitalWrite(digital[i], LOW);
 }
 
 void checkBtnStatus(){
