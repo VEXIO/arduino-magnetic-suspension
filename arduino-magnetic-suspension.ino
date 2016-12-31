@@ -4,7 +4,8 @@ int resetClock = 65536 - 65535 / 1048 * resetScd;
 int digital[] = {48, 46, 44, 50}; // the wire pin for choosing the digit
 int number[] = {32, 22, 36, 30, 34, 26, 24, 28}; // the wire for displaying number
 int matrix[] = {252, 96, 218, 242, 102, 182, 190, 224, 254, 246}; // combination of 0-9
-int showNumber;
+//int showNumber;
+#define showNumber currentSpeed
 
 int pinBtn = 13; // set Pin for Btn.
 int antiJitterDelay = 20; // change anti-jitter delay if needed. currently is 10ms. This should be usually more than 1ms, and less than 25ms.
@@ -17,7 +18,7 @@ int pinRayRcv[] = {A0, A1, A2, A3, A4}; // set pin of the ray receivers. be sure
 int pinRaySnd = 37; // set pin of the ray sender.
 int rayRcvThrehold = 500; // test when the ray is blocked, how will the signal be sent.
 int raySignalCnt = 5; // how many ray signal is set.
-int rayRcd[2]; // length should be the same as the raySignalCnt
+int rayRcd[5]; // length should be the same as the raySignalCnt
 
 int pinPowerSwitch[] = {41, 43, 45, 47, 49, 51, 53, 39}; // set pin of power setter
 
@@ -83,6 +84,7 @@ void checkCarStatus(){
     currentStatus = analogRead(pinRayRcv[carPosition + 1]);
     if (currentStatus){
       carPosition++;
+      rayRcd[carPosition] = millis();
     }
   }
 }
@@ -106,6 +108,7 @@ void setup() {
    * to the nearby ray receivers
    * and this won't cause too much pressure on the energy supply.
    **************************************************************/
+  
   pinMode(pinRaySnd, OUTPUT);
   digitalWrite(pinRaySnd, HIGH);
 
@@ -116,10 +119,23 @@ void setup() {
   bitSet(TIMSK1, TOIE1);
 }
 
+void calculateSpeed(){
+  static int lastPos = -1;
+  int diff;
+  if (lastPos != carPosition){
+    lastPos = carPosition;
+    if (lastPos > 0){
+      diff = rayRcd[lastPos] - rayRcd[lastPos - 1];
+      currentSpeed = 2 * 1000 / 100 * 1000 / diff;
+    }
+  }
+}
+
 void loop() {
   checkBtnStatus();
   changePower();
   checkCarStatus();
+  calculateSpeed();
 }
 
 ISR(TIMER1_OVF_vect){
