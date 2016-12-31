@@ -1,4 +1,5 @@
-int resetClock = 65284; // 65536 - 65535 / 1048 * 4
+int resetScd = 6;
+int resetClock = 65536 - 65535 / 1048 * resetScd;
 
 int digital[] = {48, 46, 44, 50}; // the wire pin for choosing the digit
 int number[] = {32, 22, 36, 30, 34, 26, 24, 28}; // the wire for displaying number
@@ -13,16 +14,20 @@ int carPosition = -1;
 int pinCtrlCar[] = {};
 
 int pinRayRcv[] = {A0, A1, A2, A3, A4}; // set pin of the ray receivers. be sure to set them on analog Pins but not digital pins.
-int pinRaySnd = 31; // set pin of the ray sender.
+int pinRaySnd = 37; // set pin of the ray sender.
 int rayRcvThrehold = 500; // test when the ray is blocked, how will the signal be sent.
 int raySignalCnt = 5; // how many ray signal is set.
 int rayRcd[2]; // length should be the same as the raySignalCnt
 
-int pinPowerSwitch[] = {41, 43, 45, 47, 49}; // set pin of power setter
+int pinPowerSwitch[] = {41, 43, 45, 47, 49, 51, 53, 39}; // set pin of power setter
+
+int currentSpeed;
 
 void showNum(){
-  static int i = 3;
+  static int i = 4;
   static int num = showNumber;
+  digitalWrite(digital[i], LOW); // ignite this pin.
+  i--;
   if (i == -1){
     num = showNumber;
     i = 3;
@@ -30,9 +35,6 @@ void showNum(){
   digitalWrite(digital[i], HIGH); // light the current digit pin
   showNum_show(num % 10, i);
   num /= 10;
-  delay(7);
-  digitalWrite(digital[i], LOW); // ignite this pin.
-  i--;
 }
 
 void showNum_show(int num, int k){
@@ -49,7 +51,7 @@ void showNum_show(int num, int k){
 void checkBtnStatus(){
   int currentStatus = digitalRead(pinBtn);
   if (currentStatus != btnPressed){
-    delay(antiJitterDelay);
+    delay(antiJitterDelay); // this is an anti-jitter delay for the mis-detection of the ray signals ( sudden misbehave )
     if (currentStatus == digitalRead(pinBtn)){
       btnPressed = currentStatus;
     }
@@ -72,10 +74,10 @@ void changePower_switch(int position, int action){
 
 void checkCarStatus(){
   int currentStatus;
-  if (raySignalCnt == carPosition)
+  if (raySignalCnt == carPosition){
     return;
+  }
   currentStatus = analogRead(pinRayRcv[carPosition + 1]);
-  Serial.println(currentStatus);
   if (currentStatus < rayRcvThrehold){ // determine < or > later
     delay(antiJitterDelay);
     currentStatus = analogRead(pinRayRcv[carPosition + 1]);
@@ -90,10 +92,12 @@ void setup() {
   
   // set pinMode.
   // set pin for LED segbar.
-  for (int i=0; i<4; i++)
+  for (int i=0; i<4; i++){
     pinMode(digital[i], OUTPUT);
-  for (int i=0; i<8; i++)
+  }
+  for (int i=0; i<8; i++){
     pinMode(number[i], OUTPUT);
+  }
 
   /***************************************************************
    * set pin for the ray senders
