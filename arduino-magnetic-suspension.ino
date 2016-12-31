@@ -161,6 +161,11 @@ void calculateSpeed(){
 }
 
 void loop() {
+  /** 
+    * these process will be called in every loop
+    * just in case
+    * there won't be much delay here
+   **/
   checkBtnStatus();
   changePower();
   checkCarStatus();
@@ -170,5 +175,5 @@ void loop() {
 ISR(TIMER1_OVF_vect){
   // Things done here should not cause too many delay.
   showNum(); // this should be put here for continuous refresh
-  TCNT1 = resetClock;
+  TCNT1 = resetClock; // reset the overflow clock to start another new timer interrupt.
 }
