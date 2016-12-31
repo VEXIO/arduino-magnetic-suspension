@@ -11,18 +11,21 @@ int pinBtn = 13; // set Pin for Btn.
 int antiJitterDelay = 20; // change anti-jitter delay if needed. currently is 10ms. This should be usually more than 1ms, and less than 25ms.
 int btnPressed = 0;
 
-int carPosition = -1;
+int carPosition = -1; // set the position of the car as global variable
 int pinCtrlCar[] = {};
 
-int pinRayRcv[] = {A0, A1, A2, A3, A4}; // set pin of the ray receivers. be sure to set them on analog Pins but not digital pins.
+int pinRayRcv[] = {A0, A1, A2, A3, A4, A5, A6}; // set pin of the ray receivers. be sure to set them on analog Pins but not digital pins.
 int pinRaySnd = 37; // set pin of the ray sender.
-int rayRcvThrehold = 500; // test when the ray is blocked, how will the signal be sent.
-int raySignalCnt = 5; // how many ray signal is set.
-int rayRcd[5]; // length should be the same as the raySignalCnt
+int rayRcvThrehold = 400; // test when the ray is blocked, how will the signal be sent.
+int raySignalCnt = 7; // how many ray signal is set.
+int rayRcd[7]; // length should be the same as the raySignalCnt
+int detectRaySgn[7]; // whether to enable the detection of the signals
+int detectRayFwd = 4; // detect forward: set var
+int lastDetectMom = -1; // detect the last signal
 
 int pinPowerSwitch[] = {41, 43, 45, 47, 49, 51, 53, 39}; // set pin of power setter
 
-int currentSpeed;
+int currentSpeed; // store the current speed for the segment bar to show the current speed
 
 void showNum(){
   static int i = 4;
@@ -62,31 +65,46 @@ void checkBtnStatus(){
 void changePower(){
   static int lastPosition = 0;
   if (lastPosition != carPosition){
-    changePower_switch(lastPosition, LOW);
-    changePower_switch(carPosition, HIGH);
+    changePower_switch(lastPosition, LOW); // switch the lastposition to the lower end
+    changePower_switch(carPosition, HIGH); // switch current position to the higher end: this will be switched automatically by the function called - this depends on the function of the Relay module.
     lastPosition = carPosition;
   }
 }
 
 void changePower_switch(int position, int action){
   int power = !action; // high balance to enable
-  digitalWrite(pinPowerSwitch[position], power);
+  digitalWrite(pinPowerSwitch[position], power); // write the layer
 }
 
 void checkCarStatus(){
   int currentStatus;
+  int detectPos;
   if (raySignalCnt == carPosition){
     return;
   }
-  currentStatus = analogRead(pinRayRcv[carPosition + 1]);
-  if (currentStatus < rayRcvThrehold){ // determine < or > later
-    delay(antiJitterDelay);
-    currentStatus = analogRead(pinRayRcv[carPosition + 1]);
-    if (currentStatus){
-      carPosition++;
-      rayRcd[carPosition] = millis();
+  for (int i=0; i<raySignalCnt; i++){
+    if (!detectRaySgn[i]){
+      continue;
+    }
+    currentStatus = analogRead(pinRayRcv[i]);
+    if (currentStatus < rayRcvThrehold){ // determine < or > later
+      delay(antiJitterDelay);
+      currentStatus = analogRead(pinRayRcv[i]);
+      if (currentStatus){
+        carPosition = i;
+        rayRcd[carPosition] = millis();
+        detectRaySgn[carPosition] = 0;
+        signalEnable(carPosition + detectRayFwd);
+        break;
+      }
     }
   }
+
+}
+
+void signalEnable(int k){
+  detectRaySgn[k] = 1;
+  Serial.println("Signal detecter " + String(k) + " has been enabled!");
 }
 
 void setup() {
@@ -112,6 +130,17 @@ void setup() {
   pinMode(pinRaySnd, OUTPUT);
   digitalWrite(pinRaySnd, HIGH);
 
+  // enable first (##detectRayFwd) detection
+  // because these signals won't be enabled by any signal before
+  for (int i=0; i<detectRayFwd; i++){
+    signalEnable(i);
+  }
+
+  // make sure that other signals are set to lower end
+  for (int i=detectRayFwd; i<raySignalCnt; i++){
+    detectRaySgn[i] = 0;
+  }
+
   // start TIC.
   TCCR1A = 0;
   TCCR1B = 1<<CS12;
@@ -123,11 +152,11 @@ void calculateSpeed(){
   static int lastPos = -1;
   int diff;
   if (lastPos != carPosition){
-    lastPos = carPosition;
     if (lastPos > 0){
       diff = rayRcd[lastPos] - rayRcd[lastPos - 1];
-      currentSpeed = 2 * 1000 / 100 * 1000 / diff;
+      currentSpeed = 2 * (carPosition - lastPos) * 1000 / 100 * 1000 / diff;
     }
+    lastPos = carPosition;
   }
 }
 
