@@ -6,16 +6,19 @@ int matrix[] = {252, 96, 218, 242, 102, 182, 190, 224, 254, 246}; // combination
 int showNumber;
 
 int pinBtn = 13; // set Pin for Btn.
-int antiJitterDelay = 10; // change anti-jitter delay if needed. currently is 10ms. This should be usually more than 1ms, and less than 25ms.
+int antiJitterDelay = 20; // change anti-jitter delay if needed. currently is 10ms. This should be usually more than 1ms, and less than 25ms.
 int btnPressed = 0;
 
-int carPosition = 0;
+int carPosition = -1;
 int pinCtrlCar[] = {};
 
-int pinRayRcv[] = {9, 13}; // set pin of the ray receivers. be sure to set them on analog Pins but not digital pins.
-int rayRcvThrehold = 50; // test when the ray is blocked, how will the signal be sent.
-int raySignalCnt = 2; // how many ray signal is set.
+int pinRayRcv[] = {A0, A1, A2, A3, A4}; // set pin of the ray receivers. be sure to set them on analog Pins but not digital pins.
+int pinRaySnd = 31; // set pin of the ray sender.
+int rayRcvThrehold = 500; // test when the ray is blocked, how will the signal be sent.
+int raySignalCnt = 5; // how many ray signal is set.
+int rayRcd[2]; // length should be the same as the raySignalCnt
 
+int pinPowerSwitch[] = {41, 43, 45, 47, 49}; // set pin of power setter
 
 void showNum(){
   static int i = 3;
@@ -63,7 +66,8 @@ void changePower(){
 }
 
 void changePower_switch(int position, int action){
-  // don't know what to do before seeing the parts.
+  int power = !action; // high balance to enable
+  digitalWrite(pinPowerSwitch[position], power);
 }
 
 void checkCarStatus(){
@@ -71,6 +75,7 @@ void checkCarStatus(){
   if (raySignalCnt == carPosition)
     return;
   currentStatus = analogRead(pinRayRcv[carPosition + 1]);
+  Serial.println(currentStatus);
   if (currentStatus < rayRcvThrehold){ // determine < or > later
     delay(antiJitterDelay);
     currentStatus = analogRead(pinRayRcv[carPosition + 1]);
@@ -81,13 +86,25 @@ void checkCarStatus(){
 }
 
 void setup() {
+  Serial.begin(9600);
+  
   // set pinMode.
+  // set pin for LED segbar.
   for (int i=0; i<4; i++)
     pinMode(digital[i], OUTPUT);
   for (int i=0; i<8; i++)
     pinMode(number[i], OUTPUT);
 
-    
+  /***************************************************************
+   * set pin for the ray senders
+   * as the ray sender will be positioned on the train
+   * the ray sender will be always sending out signals
+   * to the nearby ray receivers
+   * and this won't cause too much pressure on the energy supply.
+   **************************************************************/
+  pinMode(pinRaySnd, OUTPUT);
+  digitalWrite(pinRaySnd, HIGH);
+
   // start TIC.
   TCCR1A = 0;
   TCCR1B = 1<<CS12;
