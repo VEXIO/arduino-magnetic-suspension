@@ -25,7 +25,7 @@ int lastDetectMom = -1; // detect the last signal
 
 int pinPowerSwitch[] = {41, 43, 45, 47, 49, 51, 53, 39}; // set pin of power setter
 
-int currentSpeed; // store the current speed for the segment bar to show the current speed
+int currentSpeed = 0; // store the current speed for the segment bar to show the current speed
 
 void showNum(){
   static int i = 4;
@@ -155,6 +155,11 @@ void calculateSpeed(){
     if (lastPos > 0){
       diff = rayRcd[lastPos] - rayRcd[lastPos - 1];
       currentSpeed = 2 * (carPosition - lastPos) * 1000 / 100 * 1000 / diff;
+      if (currentSpeed > 9999)
+        currentSpeed = 9999;
+      if (currentSpeed < 0)
+        currentSpeed = -currentSpeed;
+      Serial.println(currentSpeed);
     }
     lastPos = carPosition;
   }
