@@ -1,12 +1,12 @@
-##Arduino Magnetic Suspension
+## Arduino Magnetic Suspension
 
-####Todo list
+#### Todo list
 1. 小车检测模块（红外LED发射接收管->阻断传感器）->小车位置
 2. 根据位置与启动状态控制电磁铁通断（可能不能反向）->8路继电器
 3. 速度显示（4位7段数码管）
 4. 启动开关（按钮，去抖动）
 
-####Workflow
+#### Workflow
 ```c
 // global variables
 // use global variables to communicate
